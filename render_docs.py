@@ -455,13 +455,16 @@ def main():
     parser = argparse.ArgumentParser(
         description="Render a design document YAML file to Docsify-compatible Markdown."
     )
-    parser.add_argument(
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         "--template",
         help="Dumps the template YAML contents to stdout.",
         action="store_true",
     )
-    parser.add_argument(
+    group.add_argument(
         "input",
+        nargs="?",
         help="Path to the design YAML file",
     )
     parser.add_argument(
@@ -479,7 +482,20 @@ def main():
     args = parser.parse_args()
 
     if args.template:
-        print("hello")
+        try:
+            import requests
+        except ImportError:
+            print("requests is required: pip install requests")
+            sys.exit(1)
+
+        response = requests.get(
+            "https://raw.githubusercontent.com/carrollaboratory/render-docs/refs/heads/main/design-template.yaml"
+        )
+        response.raise_for_status()
+        for line in response.iter_lines(decode_unicode=True):
+            if line is not None:
+                sys.stdout.write(line + "\n")
+        sys.exit(0)
 
     else:
         input_path = Path(args.input)
